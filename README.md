@@ -1,27 +1,26 @@
-import time
-import math
-import pwm_dac
-import signal_generator
+import r2r_dac as r2r
+import signal_generator as sg
+import time 
+import PWM_DAC as pwm
 
+A = 3
+f = 5
+F = 500
 
-a = 1.30
-f = 10
-fd = 200
-vmax = 3.29
+pin = 12
+dynamic_range = 3.3
+t = 0
 
+if __name__ == "__main__":
+    try:
+        dac = pwm.PWM_DAC(pin, F, dynamic_range, True)
 
-try:
-    dac = pwm_dac.PWM_DAC(12, 500, vmax, False)
-
-    t0 = time.perf_counter()
-
-    while True:
-        t = time.perf_counter() - t0
-
-        v = a + a * math.sin(2 * math.pi * f * t)
-
-        dac.set_voltage(v)
-        time.sleep(1 / fd)
-
-finally:
-    dac.deinit()
+        while True:
+            try:
+                dac.set_voltage(A* sg.get_sin_wave_amplitude(f, t))
+                sg.wait_for_sampling_period(F)
+                t += 1/F
+            except ValueError:
+                print("Вы ввели не число. Попробуйте ещё раз\n")
+    finally:
+        dac.deinit()

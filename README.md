@@ -1,20 +1,19 @@
-import pwm_dac as pwm
+import mcp4725_driver as mcp
 import signal_generator as sg
 import time
 
 
-amp = 2.7
+amp = 5.0
 freq = 10
 fs = 1000
-vmax = 3.29
-fpwm = 20000
+vmax = 5.11
 
 if amp > vmax:
-    raise ValueError("Амплитуда сигнала больше динамического диапазона PWM DAC")
+    raise ValueError("Амплитуда сигнала больше динамического диапазона 12-bit DAC")
 
 
 try:
-    dac = pwm.PWM_DAC(12, fpwm, vmax, False)
+    dac = mcp.MCP4725(vmax, 0x61, False)
 
     t0 = time.perf_counter()
 

@@ -1,16 +1,20 @@
-import r2r_dac as r2r
+import pwm_dac as pwm
 import signal_generator as sg
 import time
 
 
-amp = 3.2
+amp = 2.7
 freq = 10
 fs = 1000
-vmax = 3.3
+vmax = 3.29
+fpwm = 20000
+
+if amp > vmax:
+    raise ValueError("Амплитуда сигнала больше динамического диапазона PWM DAC")
 
 
 try:
-    dac = r2r.R2R_DAC([16, 20, 21, 25, 26, 17, 27, 22], vmax, False)
+    dac = pwm.PWM_DAC(12, fpwm, vmax, False)
 
     t0 = time.perf_counter()
 

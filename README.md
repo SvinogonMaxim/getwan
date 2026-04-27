@@ -1,79 +1,29 @@
-import RPi.GPIO as GPIO
 import time
+import r2r_adc as adc
+import adc_plot as ap
 
 
-class R2R_ADC:
-    def __init__(self, mx, dt=0.01, vb=False):
-        self.mx = mx
-        self.vb = vb
-        self.dt = dt
+mx = 3.18
+dt = 0.0001
+tm = 3.0
 
-        self.bits_gpio = [26, 20, 19, 16, 13, 12, 25, 11]
-        self.comp_gpio = 21
-
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setup(self.bits_gpio, GPIO.OUT, initial=0)
-        GPIO.setup(self.comp_gpio, GPIO.IN)
-
-    def deinit(self):
-        GPIO.output(self.bits_gpio, 0)
-        GPIO.cleanup()
-
-    def number_to_dac(self, n):
-        b = [int(x) for x in bin(n)[2:].zfill(8)]
-        GPIO.output(self.bits_gpio, b)
-
-    def sequential_counting_adc(self):
-        for n in range(256):
-            self.number_to_dac(n)
-            time.sleep(self.dt)
-
-            c = GPIO.input(self.comp_gpio)
-
-            if self.vb:
-                print(f"n = {n}, c = {c}")
-
-            if c == 0:
-                return n
-
-        return 255
-
-    def get_sc_voltage(self):
-        n = self.sequential_counting_adc()
-        v = n / 255 * self.mx
-        return v
-
-    def successive_approximation_adc(self):
-        n = 0
-
-        for bit in [128, 64, 32, 16, 8, 4, 2, 1]:
-            x = n + bit
-            self.number_to_dac(x)
-            time.sleep(self.dt)
-
-            c = GPIO.input(self.comp_gpio)
-
-            if self.vb:
-                print(f"bit = {bit}, x = {x}, c = {c}")
-
-            if c == 1:
-                n = x
-
-        return n
-
-    def get_sar_voltage(self):
-        n = self.successive_approximation_adc()
-        v = n / 255 * self.mx
-        return v
+vs = []
+ts = []
 
 
-if __name__ == "__main__":
-    a = R2R_ADC(3.18, 0.0001, False)
+a = adc.R2R_ADC(mx, dt, False)
 
-    try:
-        while True:
-            v = a.get_sar_voltage()
-            print(f"Напряжение: {v:.3f} В")
+try:
+    t0 = time.time()
 
-    finally:
-        a.deinit()
+    while time.time() - t0 < tm:
+        v = a.get_sar_voltage()
+        t = time.time() - t0
+
+        vs.append(v)
+        ts.append(t)
+
+    ap.plot_voltage_vs_time(ts, vs, mx)
+
+finally:
+    a.deinit()

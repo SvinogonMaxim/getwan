@@ -1,47 +1,27 @@
-import smbus
 import time
+import mcp3021_driver as mcp
+import adc_plot as ap
 
 
-class MCP3021:
-    def __init__(self, mx, vb=False):
-        self.bus = smbus.SMBus(1)
-        self.mx = mx
-        self.addr = 0x4D
-        self.vb = vb
+a = 5.11
+dt = 3.0
 
-    def deinit(self):
-        self.bus.close()
+adc = mcp.MCP3021(a, False)
 
-    def get_number(self):
-        d = self.bus.read_word_data(self.addr, 0)
+u = []
+t = []
 
-        lo = d >> 8
-        up = d & 0xFF
+try:
+    t0 = time.perf_counter()
 
-        n = (up << 6) | (lo >> 2)
+    while time.perf_counter() - t0 < dt:
+        x = time.perf_counter() - t0
+        y = adc.get_voltage()
 
-        if self.vb:
-            print(f"Данные: {d}, upper: {up:x}, lower: {lo:x}, число: {n}")
+        t.append(x)
+        u.append(y)
 
-        return n
+    ap.plot_voltage_vs_time(t, u, a)
 
-    def get_voltage(self):
-        n = self.get_number()
-        v = n / 1023 * self.mx
-        return v
-
-
-if __name__ == "__main__":
-    a = MCP3021(5.11, False)
-
-    try:
-        while True:
-            v = a.get_voltage()
-            print(f"Напряжение: {v:.3f} В")
-            time.sleep(1)
-
-    finally:
-        a.deinit()
-raspi-gpio set 2 a0
-raspi-gpio set 3 a0
-raspi-gpio get
+finally:
+    adc.deinit()

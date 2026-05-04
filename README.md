@@ -1,1 +1,2 @@
-ap.plot_sampling_period_hist(ts)
+cd ~/Repositories/get/get-adc
+python3 r2r-sar.py
